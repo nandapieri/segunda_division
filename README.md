@@ -1,28 +1,34 @@
 # Segunda División 2024/25 — Contextual League Analysis
 
-This project applies the same analytical framework previously used for La Liga to Spain’s Segunda División, with one central question in mind:
+This project applies the **same analytical framework used for La Liga** to Spain’s Segunda División, with one central question:
 
 > **How does the analytical context change when moving from La Liga to Segunda División?**
 
-Rather than introducing new metrics or models, the goal is to **observe how the same questions behave under a different competitive environment**.
+Rather than introducing new metrics or models, the objective is to **observe how identical questions behave under a different competitive environment**.
+
+The focus is not comparison for ranking purposes, but **contextual understanding**.
 
 ---
 
 ## 🎯 Project Objective
 
-To build a **contextual, league-level understanding** of the Segunda División by:
-- Reusing a proven analytical framework
-- Adapting it honestly to data availability and league structure
-- Avoiding premature rankings or player-level conclusions
+Build a **league-level, context-aware understanding** of the Segunda División by:
+
+- Reusing a consistent analytical framework  
+- Adapting it honestly to data availability and competition structure  
+- Avoiding premature conclusions at player or recruitment level  
 
 This project focuses on:
-- league structure
-- home advantage
-- competitive compression
-- outcome-based efficiency
-- defensive stability
+- league structure  
+- home advantage  
+- competitive compression  
+- outcome-based efficiency  
+- defensive stability  
 
-Player-level analysis, recruitment use cases, and predictive modeling are **explicitly out of scope**.
+**Out of scope by design:**
+- player-level analysis  
+- recruitment use cases  
+- predictive modeling  
 
 ---
 
@@ -34,19 +40,23 @@ Player-level analysis, recruitment use cases, and predictive modeling are **expl
 ### Season
 - **2024/25** (completed season)
 
-### Scraping Challenges & Resolution
+---
 
-During data collection, FBref implemented an additional anti-bot / security layer, which caused standard HTTP requests to return an interstitial page instead of the actual HTML content.
+### Scraping Constraints & Resolution
 
-#### Attempted solutions:
-- Direct requests (blocked)
-- Export options (no longer available for this competition)
-- Static HTML parsing (incomplete)
+During data collection, FBref introduced an additional anti-bot / security layer, causing standard HTTP requests to return an interstitial page instead of the rendered table.
 
-#### Final solution:
-- Use Playwright to load the page in a real browser context
-- Extract the rendered HTML
-- Parse the table locally
+**Attempted approaches:**
+- Direct HTTP requests (blocked)  
+- Export options (not available for this competition)  
+- Static HTML parsing (incomplete)  
+
+**Final solution:**
+- Load the page in a real browser context using **Playwright**  
+- Extract rendered HTML  
+- Parse the table locally  
+
+This approach ensured **data completeness and reproducibility**.
 
 ---
 
@@ -55,17 +65,16 @@ During data collection, FBref implemented an additional anti-bot / security laye
 ### Match-level table
 `matches`
 
-Each row represents one match, with the following schema:
+Each row represents a single match, with the following schema:
 
-date
-home_team
-away_team
-score
-attendance
-venue
+- `date`  
+- `home_team`  
+- `away_team`  
+- `score`  
+- `attendance`  
+- `venue`  
 
-
-> ⚠️ Expected Goals (xG) data is **not available** for this competition and season.
+> ⚠️ **Expected Goals (xG) data is not available** for this competition and season.
 
 ---
 
@@ -75,27 +84,28 @@ The Segunda División includes **promotion playoffs**, which are not part of the
 
 To preserve analytical consistency:
 
-- **Regular season**: 462 matches  
-- **Playoffs**: 6 matches  
+- **Regular season:** 462 matches  
+- **Playoffs:** 6 matches  
 
-Playoffs are **explicitly excluded** from the analytical baseline.
+Playoff matches are **explicitly excluded** from the analytical baseline.
 
 ---
 
 ### Views Created
 
 #### Match-level
-- `matches_regular_season`
-- `matches_playoffs`
+- `matches_regular_season`  
+- `matches_playoffs`  
 
-#### Team-level (duplication applied *after* context separation)
-- `team_matches_regular`
-- `team_matches_playoffs`
+#### Team-level  
+(duplication applied *after* context separation)
+
+- `team_matches_regular`  
+- `team_matches_playoffs`  
 
 > **Design principle:**  
-> Context is resolved *before* duplicating matches into team-level rows.
-
-This avoids playoff leakage into league-wide metrics and simplifies downstream queries.
+> Context is resolved *before* duplicating matches into team-level rows.  
+> This prevents playoff leakage into league-wide metrics and simplifies downstream analysis.
 
 ---
 
@@ -103,15 +113,15 @@ This avoids playoff leakage into league-wide metrics and simplifies downstream q
 
 A dedicated `00_sanity_checks.sql` file validates:
 
-- correct number of matches (462 regular, 6 playoffs)
-- correct team count (22)
-- 42 matches per team
-- proper home/away duplication
-- score format consistency
-- absence of NULLs in mandatory fields
-- no playoff matches leaking into the regular-season base
+- correct number of matches (462 regular, 6 playoffs)  
+- correct team count (22)  
+- 42 matches per team  
+- correct home/away duplication  
+- score format consistency  
+- absence of NULLs in mandatory fields  
+- no playoff matches leaking into regular-season data  
 
-All sanity checks pass before analysis begins.
+All checks pass before analysis begins.
 
 ---
 
@@ -119,62 +129,64 @@ All sanity checks pass before analysis begins.
 
 The analysis follows five structured steps.
 
-### 01 — Season Overview
+### 01 — Season Overview  
 **Purpose:** describe the league environment.
 
-- total matches
-- total goals
-- goals per match
-- attendance range and average
+- total matches  
+- total goals  
+- goals per match  
+- attendance range and average  
 
-No comparisons, rankings, or interpretations are made at this stage.
+No rankings or interpretations at this stage.
 
 ---
 
-### 02 — Home vs Away Context
+### 02 — Home vs Away Context  
 **Purpose:** understand the role of home advantage.
 
-- goals scored home vs away
-- distribution of match results (home win / draw / away win)
+- goals scored at home vs away  
+- distribution of results (home win / draw / away win)  
 
-Key focus:
+Key question:
 > Is home advantage about dominance, or about avoiding defeat?
 
 ---
 
-### 03 — Team-Level Context
+### 03 — Team-Level Context  
 **Purpose:** observe league compression and competitive structure.
 
-- goals for / against
-- goal difference
-- points and points per match
-- home vs away point accumulation
+- goals for and against  
+- goal difference  
+- points and points per match  
+- home vs away point accumulation  
 
-Rankings are shown for orientation only — the analysis focuses on **distribution and spread**, not “best teams”.
+Rankings are shown for orientation only.  
+The analysis focuses on **distribution and spread**, not “best teams”.
 
 ---
 
-### 04 — Outcome Efficiency Outliers
+### 04 — Outcome Efficiency Outliers  
 **Purpose:** identify different paths to similar results.
 
-Because xG is unavailable:
-- efficiency is **outcome-based**, not process-based
-- the key comparison is between:
-  - goal difference per match
-  - points per match
+Due to the absence of xG:
+- efficiency is **outcome-based**, not process-based  
 
-An `outcome_efficiency_delta` is calculated as a **descriptive aid**, not a ranking metric.
+The key comparison is between:
+- goal difference per match  
+- points per match  
 
-> This step highlights *survivors vs dominators*, not overperformance.
+An `outcome_efficiency_delta` is used as a **descriptive aid**, not a performance metric.
+
+> This highlights *survivors vs dominators*, not overperformance.
 
 ---
 
-### 05 — Defensive Stability
+### 05 — Defensive Stability  
 **Purpose:** close the analytical loop.
 
-- goals conceded
-- goals conceded per match
-- defensive stability vs points
+- goals conceded  
+- goals conceded per match  
+- defensive stability vs points  
 
 Key insight:
 > In Segunda División, defensive solidity is a **baseline requirement for competitiveness**, not a guarantee of success.
@@ -183,38 +195,38 @@ Key insight:
 
 ## 🚫 Explicit Non-Goals
 
-This project does **not** include:
+This project intentionally does **not** include:
 
-- player-level metrics
-- recruitment analysis
-- clustering
-- predictive models
-- cross-season comparisons
-- real-time or live data
+- player-level metrics  
+- recruitment analysis  
+- clustering  
+- predictive models  
+- cross-season comparisons  
+- live or real-time data  
 
-Those are intentionally deferred to future work.
+These are deferred to future work.
 
 ---
 
 ## 🧠 Key Takeaways (High Level)
 
-- The Segunda División is **highly compressed**.
-- Home advantage acts more as **protection against defeat** than as dominance.
-- Defensive stability keeps teams competitive, but does not guarantee top positions.
-- Multiple teams reach similar point totals through **very different competitive paths**.
+- The Segunda División is **highly compressed**.  
+- Home advantage acts more as **protection against defeat** than dominance.  
+- Defensive stability keeps teams competitive, but does not ensure top positions.  
+- Similar point totals are achieved through **very different competitive paths**.  
 - Analytical frameworks do not transfer automatically between leagues — even within the same country.
 
 ---
 
 ## 📦 Outputs
 
-- Clean match-level dataset
-- Reproducible SQL queries
-- Clear separation of context (regular season vs playoffs)
-- A league-level baseline ready for:
-  - future player analysis
-  - recruitment-oriented extensions
-  - cross-league comparison with La Liga
+- Clean match-level dataset  
+- Reproducible SQL queries  
+- Clear separation of competition context  
+- A league-level baseline suitable for:
+  - future player analysis  
+  - recruitment-oriented extensions  
+  - structured comparison with La Liga  
 
 ---
 
@@ -222,9 +234,9 @@ Those are intentionally deferred to future work.
 
 This project prioritizes **analytical honesty over symmetry**.
 
-Rather than forcing La Liga concepts onto a different competition, the framework adapts to:
-- data availability
-- league structure
-- competitive reality
+Rather than forcing La Liga assumptions onto a different competition, the framework adapts to:
+- data availability  
+- league structure  
+- competitive reality  
 
 That adaptation — not the metrics themselves — is the core result.
